@@ -23,6 +23,16 @@ const INPUT_DIR = process.env.MAKEFUN_INPUT_DIR ?? '/input';
 const OUTPUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
 const cases = JSON.parse(readFileSync(join(INPUT_DIR, 'cases.json'), 'utf8')) as { id: string; input: unknown }[];
-const answers: unknown[] = [];
-for (const c of cases) answers.push(run(c.input));
-writeFileSync(join(OUTPUT_DIR, 'answers.json'), JSON.stringify(answers));
+// Output is built per case: each answer is stringified on its own and the
+// parts joined, instead of one JSON.stringify over all the answers. The
+// bytes are identical (JSON.stringify of an array is its elements' strings
+// joined with commas), but measured on the practice set the per-case form
+// is much cheaper: no giant intermediate string, and each case's answer
+// graph can be collected before the next case runs.
+const parts: string[] = ['['];
+for (let i = 0; i < cases.length; i++) {
+  if (i > 0) parts.push(',');
+  parts.push(JSON.stringify(run(cases[i].input)));
+}
+parts.push(']');
+writeFileSync(join(OUTPUT_DIR, 'answers.json'), parts.join(''));

@@ -105,25 +105,32 @@ export function run(input) {
           if (!doubled && !(ni !== -1 && ni < closeIdx) && !(ri !== -1 && ri < closeIdx)) {
             value = text.slice(start, closeIdx);
           } else {
-            // Content holds doubled quotes and/or line breaks: build it.
+            // Content holds doubled quotes and/or line breaks: build it by
+            // slicing the plain runs between specials (a doubled quote or a
+            // CR) instead of concatenating one character at a time; LFs are
+            // copied as they stand and only counted.
             let v = '';
+            let seg = start;
             let p = start;
             while (p < closeIdx) {
               const ch = text.charCodeAt(p);
               if (ch === 34) {
+                v += text.slice(seg, p);
                 v += '"';
                 p += 2;
+                seg = p;
               } else if (ch === 13) {
+                v += text.slice(seg, p);
                 v += '\n';
                 line += 1;
                 p += p + 1 < closeIdx && text.charCodeAt(p + 1) === 10 ? 2 : 1;
+                seg = p;
               } else {
                 if (ch === 10) line += 1;
-                v += text[p];
                 p += 1;
               }
             }
-            value = v;
+            value = v + text.slice(seg, closeIdx);
             nCache = -2;
             rCache = -2;
           }
